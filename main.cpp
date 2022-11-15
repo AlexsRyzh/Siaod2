@@ -1,158 +1,140 @@
 #include <iostream>
-#include <ctime>
-#include <fstream>
-#include <iomanip>
-#include "Siaod2/Map.h"
+#include<fstream>
+#include<string>
+#include <chrono>
+#include <windows.h>
+#include <psapi.h>
+#include "Siaod4/BTree.h"
+#include "Siaod4/RBTree.h"
+#include "Siaod4/BinF.h"
+
 using namespace std;
-//Вариант 4
-struct CarOwner{
-    string carNumber;
-    string carBrand;
-    string name;
-    string surname;
-    int age;
 
-    CarOwner(){}
+string filename = "F:\\Siaod\\Siaod4\\file15.bin";
 
-    CarOwner(const string &carNumber,
-             const string &carBrand,
-             const string &name,
-             const string &surname,
-             const int &age) :
-             carNumber(carNumber),
-             carBrand(carBrand),
-             name(name),
-             surname(surname),
-             age(age) {}
-};
 
-std::ostream& operator << (std::ostream &os, const CarOwner &p)
-{
-    return os <<p.carNumber<<setw(12)<<p.carBrand<<setw(12)<<p.name<<setw(12)<<p.surname<<setw(5)<<p.age;
-}
+//record findRecord(int key, AVLTree* binTree) {
+//    AVLTree* node = binTree->findNode(key, binTree);
+//
+//    if (node) {
+//        //?????? ?????? ?? ?????
+//        fstream fdirect(filename, ios::binary | ios::out | ios::in);
+//        record rec;
+//        fdirect.seekg((node->getIndex()) * sizeof(record), ios::beg);
+//        fdirect.read((char*)&rec, sizeof(record));
+//
+//        return rec;
+//    }
+//    record rec;
+//    rec.empty = true;
+//    return rec;
+//}
 
-std::istream& operator >> (std::istream& in, CarOwner& p)
-{
-    in >>p.carNumber>>p.carBrand>>p.name>>p.surname>>p.age;;
-    return in;
-}
 
-string randCarNumber(){
-    string str(6,'1');
-    str[0] = 'a'+rand()%25;
-    str[1] = '0'+rand()%9;
-    str[2] = '0'+rand()%9;
-    str[3] = '0'+rand()%9;
-    str[4] = 'a'+rand()%25;
-    str[5] = 'a'+rand()%25;
 
-    return str;
-}
-string* randName = new string[10]{
-        "Abraham",
-        "Adam",
-        "Adrian",
-        "Albert",
-        "Arnold",
-        "Ashley",
-        "Austen",
-        "Calvin",
-        "Carl",
-        "Chad"
-};
-string* randSurName = new string[10]{
-        "Abramson",
-        "Adderiy",
-        "Albertson",
-        "Allford",
-        "Alsopp",
-        "Arnold",
-        "Backer",
-        "Benson",
-        "Blomfield",
-        "Bosworth"
-};
-string* brand = new string[10]{
-        "AUDI",
-        "ACURA",
-        "CHERY",
-        "FAW",
-        "KIA",
-        "JAGUAR",
-        "MAZDA",
-        "MERCEDES",
-        "MCLAREN",
-        "TOYOTA"
-
-};
-void fileGenerate(int n){
-    ofstream fout("F:\\Siaod\\Siaod2\\file.txt");
-    for (int i=0; i<n; i++){
-        CarOwner carOwner(
-                randCarNumber(),
-                brand[rand()%10],
-                randName[rand()%10],
-                randSurName[rand()%10],
-                rand()%50+20
-                );
-        fout<<carOwner;
-    }
-
-}
-
-void file_read(string file, Map  &map){
-    CarOwner carOwner;
-    ifstream fin(file);
-    int i=0;
-    while(!fin.eof()){
-        fin>>carOwner;
-        map.insertItem(carOwner.carNumber,i+1);
-        i++;
-    }
-}
-
-void file_del_data(string file,Map& map, string key){
-    int fileIndex = map.deleteItem(key);
-
-    list<string> list1;
-    string line;
-    ifstream fin(file);
-    int i = 1;
-    while (getline(fin, line)) {
-        if (i != fileIndex) {
-            list1.push_back(line);
-        }
-        i++;
-    }
-    fin.close();
-    ofstream fout(file);
-    for (auto line: list1){
-        fout<<line<<endl;
-    }
-    fout.close();
-}
-
-void file_add_data(string file,Map& map){
-    CarOwner carOwner(
-            randCarNumber(),
-            brand[rand()%10],
-            randName[rand()%10],
-            randSurName[rand()%10],
-            rand()%50+20
-    );
-    ofstream fout(file, ios::app);
-    fout<<endl<<carOwner;
-    map.insertItem(carOwner.carNumber, map.getSize()+1);
+void operator<<(ostream& stream, const record r) {
+    cout << r.FIO << " " << r.midScore << " " << r.presence << endl;
 }
 
 int main() {
-    srand(time(NULL));
-    string file = "F:\\Siaod\\Siaod2\\file.txt";
-    Map map(40);
-    file_read(file, map);
-    for (int i = 0; i < 10; ++i) {
-        file_add_data(file,map);
+
+    BinF binFile = BinF(filename);
+//    binFile.generateFile(15);
+
+
+    RBTree* rbTree = new RBTree();
+    int fileIndex = 0;
+    ifstream fin(filename, ios::binary | ios::in);
+    record rec;
+    while (!fin.eof()) {
+        fin.read((char*)&rec, sizeof(record));
+        if (!rec.empty) {
+            rbTree->insert(rec.FIO,fileIndex);
+        }
+        cout<<rec;
+        fileIndex++;
     }
-    map.displayHash();
+
+
+    char FIO[100];
+    rbTree->display();
+    cout<<"\n\n\n\n\n";
+    strcpy_s(FIO, "Surname57 Name58 Otchestvo87");
+
+    // Time consumed
+//    auto start = std::chrono::system_clock::now();
+//    // 15: 1799968149 1200446723
+//    // 100: 476514495
+//    // 1000: 1739882252
+//    // 2000: 40715941
+//    // 5000: 938504129
+//    // 10000: 1353653019
+//    cout << binFile.findRecord(1353653019, binTree);
+//
+//    auto end = std::chrono::system_clock::now();
+//    std::chrono::duration<double> elapsed = end - start;
+//    std::cout << elapsed.count() << " s" << '\n';
+//
+//    binTree->display(0, binTree);
+//
+//    binTree = binTree->deleteItem(binTree, 1200446723);
+//    cout << "----------------------------------" << endl;
+//    binTree->display(0, binTree);
+//
+//
+//    // ??? ??????
+//    AVLTree* avltree = new AVLTree();
+//    int fileIndex = 0;
+//    ifstream fin(filename, ios::binary | ios::in);
+//    record rec;
+//    while (!fin.eof()) {
+//        fin.read((char*)&rec, sizeof(record));
+//        //cout << rec;
+//        if (!rec.empty)
+//        {
+//            if (fileIndex == 0) {
+//                avltree = avltree->addNode(rec.license, fileIndex);
+//            }
+//            else
+//                avltree = avltree->addNode(rec.license, fileIndex, avltree);
+//        }
+//        fileIndex++;
+//    }
+//
+//    auto start = std::chrono::system_clock::now();
+//    // 15: 1799968149 1200446723
+//    // 100: 476514495
+//    // 1000: 1739882252
+//    // 2000: 40715941
+//    // 5000: 938504129
+//    // 10000: 1353653019
+//    cout << findRecord(1353653019, avltree);
+//
+//    // Time consumed
+//    auto end = std::chrono::system_clock::now();
+//    std::chrono::duration<double> elapsed = end - start;
+//    std::cout << elapsed.count() << " s" << '\n';
+//
+//    avltree->display(0, avltree);
+//    cout << "Total rotations: " << avltree->getRotations() << endl;
+//    cout << "----------------------------------" << endl;
+//
+//    avltree = avltree->deleteNode(1200446723, avltree);
+//    avltree->display(0, avltree);
+//    cout << "Total rotations: " << avltree->getRotations() << endl;
+//
+//
+//
+//
+//
+//    // RAM used
+//    // ??????? ??????????
+//    // ????? windows.h ? psapi.h
+//    PROCESS_MEMORY_COUNTERS_EX pmc;
+//    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+//    SIZE_T virtualMemUsedByMe = pmc.PrivateUsage;
+//    SIZE_T physMemUsedByMe = pmc.WorkingSetSize;
+//    std::cout << physMemUsedByMe << '\n';
+
     return 0;
 }
